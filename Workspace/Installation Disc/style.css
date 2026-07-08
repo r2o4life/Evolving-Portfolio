@@ -1,0 +1,454 @@
+:root {
+    --bg-dark: #050505;
+    --primary: #7000FF;
+    --secondary: #00F0FF;
+    --text-main: #FFFFFF;
+    --text-muted: #888899;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+    padding: 5vh 0;
+}
+
+/* Background Effects */
+.background-grid {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    perspective: 1000px;
+    transform: rotateX(60deg) translateY(-100px) translateZ(-200px);
+    transform-origin: top center;
+    animation: gridMove 20s linear infinite;
+    z-index: 0;
+}
+
+@keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 40px; }
+}
+
+.ambient-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(112,0,255,0.15) 0%, rgba(0,240,255,0.05) 50%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(40px);
+}
+
+.container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 1200px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+}
+
+/* Header */
+header {
+    text-align: center;
+    animation: fadeInDown 1s ease-out;
+}
+
+.title {
+    font-size: 4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.badge {
+    font-size: 1rem;
+    padding: 0.3rem 0.8rem;
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--secondary);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    -webkit-text-fill-color: var(--secondary);
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+/* Main Section */
+.installation-module {
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+    width: 100%;
+    max-width: 900px;
+    animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+/* The Disc */
+.disc-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    perspective: 1000px;
+}
+
+.disc {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%),
+                conic-gradient(from 0deg, var(--primary), var(--secondary), #FF007A, var(--primary));
+    position: relative;
+    box-shadow: 
+        0 0 40px rgba(112,0,255,0.4),
+        inset 0 0 20px rgba(255,255,255,0.2),
+        inset 0 0 40px rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: spin 10s linear infinite;
+    transform-style: preserve-3d;
+    transform: rotateX(20deg);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+.disc:hover {
+    transform: rotateX(0deg) scale(1.05);
+    box-shadow: 
+        0 0 60px rgba(0,240,255,0.6),
+        inset 0 0 20px rgba(255,255,255,0.3),
+        inset 0 0 40px rgba(0,0,0,0.8);
+}
+
+.disc-inner {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--bg-dark);
+    box-shadow: inset 0 0 15px rgba(0,0,0,1), 0 0 10px rgba(255,255,255,0.2);
+    position: relative;
+    z-index: 2;
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+.disc-reflection {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 90deg, transparent 0%, rgba(255,255,255,0.3) 10%, transparent 20%, transparent 50%, rgba(255,255,255,0.3) 60%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes spin {
+    100% { transform: rotateX(20deg) rotateZ(360deg); }
+}
+
+.disc:hover {
+    animation-play-state: paused;
+}
+
+/* Glass Panel / Prompt */
+.glass-panel {
+    flex: 1.5;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 2px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+}
+
+.glass-panel:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 240, 255, 0.3);
+}
+
+.panel-header {
+    background: rgba(0,0,0,0.2);
+    padding: 12px 20px;
+    border-radius: 14px 14px 0 0;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.window-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.control {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.control.close { background: #FF5F56; }
+.control.minimize { background: #FFBD2E; }
+.control.maximize { background: #27C93F; }
+
+.panel-title {
+    margin-left: auto;
+    margin-right: auto;
+    transform: translateX(-24px); /* offset for controls */
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.text-area-wrapper {
+    padding: 24px;
+}
+
+textarea {
+    width: 100%;
+    height: 140px;
+    background: transparent;
+    border: none;
+    color: var(--secondary);
+    font-family: 'Fira Code', monospace;
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+textarea::selection {
+    background: rgba(112, 0, 255, 0.5);
+}
+
+.panel-footer {
+    padding: 20px 24px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.1);
+    border-radius: 0 0 14px 14px;
+}
+
+.primary-btn {
+    background: linear-gradient(90deg, var(--primary), #8F00FF);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(112,0,255,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.primary-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: skewX(-20deg);
+    transition: all 0.5s ease;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px rgba(112,0,255,0.4);
+    background: linear-gradient(90deg, #8F00FF, var(--primary));
+}
+
+.primary-btn:hover::after {
+    left: 150%;
+}
+
+.primary-btn:active {
+    transform: translateY(1px);
+}
+
+.feedback-msg {
+    font-size: 0.9rem;
+    color: #27C93F;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.feedback-msg.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Guide Module */
+.guide-module {
+    width: 100%;
+    max-width: 900px;
+    margin-top: 2rem;
+    animation: fadeInUp 1s ease-out 0.4s both;
+}
+
+.section-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--secondary);
+    text-align: center;
+}
+
+.section-desc {
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.step-card {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.step-number {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--bg-dark);
+    background: var(--secondary);
+    padding: 4px 12px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+.step-title {
+    font-size: 1.3rem;
+    color: var(--text-main);
+}
+
+.step-content p {
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.step-content code {
+    font-family: 'Fira Code', monospace;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--secondary);
+    font-size: 0.9em;
+}
+
+.step-highlight {
+    background: rgba(112, 0, 255, 0.1);
+    border-left: 3px solid var(--primary);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.step-highlight strong {
+    color: var(--secondary);
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+    .installation-module {
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .title {
+        font-size: 2.5rem;
+    }
+    
+    .disc {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .glass-panel {
+        width: 100%;
+    }
+}

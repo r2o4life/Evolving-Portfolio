@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Architect OS Installation</title>
+    <meta name="description"
+        content="Boot up your AI with the Architect OS installation disc. Override default instincts and force structured software architecture.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="background-grid"></div>
+    <div class="ambient-glow"></div>
+
+    <main class="container">
+        <header>
+            <h1 class="title">Architect OS <span class="badge">v1.03</span></h1>
+            <p class="subtitle">System Installation Disc</p>
+        </header>
+
+        <section class="installation-module">
+            <div class="disc-container">
+                <div class="disc">
+                    <div class="disc-inner"></div>
+                    <div class="disc-reflection"></div>
+                </div>
+            </div>
+
+            <div class="prompt-container glass-panel">
+                <div class="panel-header">
+                    <div class="window-controls">
+                        <span class="control close"></span>
+                        <span class="control minimize"></span>
+                        <span class="control maximize"></span>
+                    </div>
+                    <div class="panel-title">installer.sh</div>
+                </div>
+
+                <div class="text-area-wrapper">
+                    <textarea id="prompt-text" readonly
+                        spellcheck="false">Think of this prompt as an operating system installation disk for your AI code editor. It overrides the LLM's default instinct to start mindlessly writing code and forces it to become a structured software architect.</textarea>
+                </div>
+
+                <div class="panel-footer">
+                    <button id="copy-btn" class="primary-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M16 12.9V17.1C16 20.6 14.6 22 11.1 22H6.9C3.4 22 2 20.6 2 17.1V12.9C2 9.4 3.4 8 6.9 8H11.1C14.6 8 16 9.4 16 12.9Z"
+                                fill="currentColor" fill-opacity="0.2" />
+                            <path
+                                d="M17.1 2H12.9C9.45 2 8.05 3.37 8.01 6.75H11.1C15.3 6.75 17.25 8.7 17.25 12.9V15.99C20.63 15.95 22 14.55 22 11.1V6.9C22 3.4 20.6 2 17.1 2Z"
+                                fill="currentColor" />
+                        </svg>
+                        Copy Installation Code
+                    </button>
+                    <span id="copy-feedback" class="feedback-msg">Copied to clipboard!</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="guide-module">
+            <h2 class="section-title">How to Use This Prompt</h2>
+            <p class="section-desc">Think of this prompt as an operating system installation disk for your AI code
+                editor. It overrides the LLM's default instinct to start mindlessly writing code and forces it to become
+                a structured software architect.</p>
+
+            <div class="steps-container">
+                <div class="step-card glass-panel">
+                    <div class="step-header">
+                        <span class="step-number">01</span>
+                        <h3 class="step-title">The Initial Injected Boot</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Start a completely fresh session or project workspace. Paste the entire system prompt above
+                            into the chat box (or assign it to your agent system rules).</p>
+                        <div class="step-highlight">
+                            <strong>What the AI will do:</strong> It will automatically create the <code>.blink/</code>
+                            folder and the markdown/JSON files in your workspace, print a clean confirmation receipt,
+                            and stop. It will ask you for your business objectives or high-level PRD.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card glass-panel">
+                    <div class="step-header">
+                        <span class="step-number">02</span>
+                        <h3 class="step-title">Feeding the Pipeline</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Instead of pasting your entire PRD into the chat window, open the newly created
+                            <code>.blink/prd_directive.md</code> file in your editor and paste your product requirements
+                            directly into it. Tell the AI chat: <em>"I have populated the semantic layer files.
+                                Proceed."</em>
+                        </p>
+                        <div class="step-highlight">
+                            <strong>Why this matters:</strong> The chat window stays completely clean. The LLM reads the
+                            file as an external configuration asset, keeping its direct chat memory free of bloat. Next,
+                            repeat this process for your technical stack inside <code>stack_spec.json</code>.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card glass-panel">
+                    <div class="step-header">
+                        <span class="step-number">03</span>
+                        <h3 class="step-title">Normal Engineering Mode</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>Once the AI tells you the pipeline is locked, you can start coding like normal (e.g., "Build
+                            the authentication layout component"). The AI will pull instructions from the
+                            <code>.blink/</code> files behind the scenes as its guardrails.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="step-card glass-panel">
+                    <div class="step-header">
+                        <span class="step-number">04</span>
+                        <h3 class="step-title">Handling Runtime Drifts</h3>
+                    </div>
+                    <div class="step-content">
+                        <p>If you ask for a feature that contradicts your tech stack (or if the AI realizes a library
+                            you chose can't actually support a feature in your PRD), it will halt mid-track. You will
+                            see the visual <code># SIDE DIRECTIVE</code> block isolate itself from the code.</p>
+                        <div class="step-highlight">
+                            Simply type your decision in plain text (e.g., "Change the spec to use 2D canvas instead of
+                            3D"). The AI will automatically update the <code>.blink/</code> files to match your new
+                            decision and cleanly resume writing your code without corrupting your repository history.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
