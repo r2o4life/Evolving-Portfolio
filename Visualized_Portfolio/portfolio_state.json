@@ -15,7 +15,7 @@
       "timestamp": "2026-07-08T14:20:33-07:00",
       "value_proposition": "A stylized web interface for deploying the Architect OS system prompt to bootstrap AI coding agents into a structured engineering workflow.",
       "summary": "This project provides a frontend 'installation disc' experience for users to copy an overriding system prompt. The prompt forces an LLM to utilize a .blink/ configuration directory for PRD and stack specifications before writing code. It features a cyber-aesthetic, glassmorphic UI.",
-      "live_url": "https://artworthi.github.io/Evolving-Portfolio/Workspace/Installation%20Disc/index.html",
+      "live_url": "https://r2o4life.github.io/Evolving-Portfolio/Workspace/Installation%20Disc/index.html",
       "thumbnail_url": "../../Workspace/Installation Disc/screenshot.png",
       "gemsg_pillars": [
         "Governance",
