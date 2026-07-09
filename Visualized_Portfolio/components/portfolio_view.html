@@ -56,8 +56,8 @@
     <main id="portfolio-root"></main>
 
     <script>
-        // Reads the local state file directly
-        fetch('../portfolio_state.json')
+        // Reads the local state file directly, with a cache-buster so the browser always gets the latest sync
+        fetch('../portfolio_state.json?t=' + new Date().getTime())
             .then(res => res.json())
             .then(data => {
                 const meta = data.portfolio_metadata;
