@@ -13,7 +13,7 @@ You are strictly bound to mutating the `Visualized_Portfolio/portfolio_state.jso
   "value_proposition": "string (One sentence, high-impact executive statement)",
   "summary": "string (A paragraph summarizing the core mechanics or design decisions)",
   "live_url": "string (URL to the live hosted GitHub Pages directory)",
-  "gemsg_pillars": ["Growth" | "Engagement" | "Monetization" | "Support" | "Governance"],
+  "gemsg_pillars": ["Growth" | "Engagement" | "Monetization" | "Support" | "Governance" | "Economics" | "Modernization" | "Sociology"],
   "act_evaluation": {
     "aesthetics": "string",
     "clarity": "string",
