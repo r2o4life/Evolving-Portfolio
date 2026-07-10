@@ -53,7 +53,7 @@
       "timestamp": "2026-07-10T12:12:42-07:00",
       "value_proposition": "A generative, AI-driven asset compiler that transforms semantic object prompts into deterministically rendered, exportable HTML artifacts.",
       "summary": "This Flutter web tool provides a streamlined interface for compiling and previewing AI-generated UI objects. It features robust local validation and one-click export to clipboard or file, ensuring the generated web assets are perfectly portable and ready for immediate deployment.",
-      "live_url": "https://r2o4life.github.io/Evolving-Portfolio/Workspace/htmlassets/",
+      "live_url": "https://r2o4life.github.io/Evolving-Portfolio/Workspace/htmlassets/build/web/",
       "gemsg_pillars": [
         "Modernization",
         "Growth"
