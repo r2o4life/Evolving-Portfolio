@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Mirror - Registry</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Project Mirror</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">Registry Index</a>
+                <a href="#" class="nav-item">My Projects</a>
+                <a href="#" class="nav-item">Communities</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-secondary w-full" onclick="openSpawnModal()">+ Spawn Competitor</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-container">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" placeholder="Search proprietary targets (e.g. Jira)..." class="search-input">
+                </div>
+                <div class="user-profile" id="authContainer">
+                    <!-- Auth UI injected via app.js -->
+                    <button class="btn btn-secondary" id="loginBtn">Sign In with GitHub</button>
+                </div>
+            </header>
+
+            <div class="content-header">
+                <h1>Active Competitor Registry</h1>
+                <span class="badge" id="registryCount">0 Active</span>
+            </div>
+
+            <!-- Semantic Table View (Replacing identical card grid) -->
+            <div class="table-container">
+                <table class="registry-table">
+                    <thead>
+                        <tr>
+                            <th>Proprietary Target</th>
+                            <th>Open Source Alternative</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registryTableBody">
+                        <!-- Rows injected via app.js -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Spawning Competitor -->
+    <div class="modal-overlay" id="spawnModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Initialize Competitor</h3>
+                <button class="btn-icon" id="cancelSpawn">×</button>
+            </div>
+            <form id="spawnForm" class="modal-form">
+                <div class="form-group">
+                    <label for="targetProprietary">Proprietary Target</label>
+                    <input type="text" id="targetProprietary" required placeholder="e.g. Adobe Premiere" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="newName">Open-Source Project Name</label>
+                    <input type="text" id="newName" required placeholder="e.g. OpenCuts" class="form-control">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeSpawnModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Initialize Repository</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Login -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Sign In</h3>
+                <button type="button" class="btn-icon" onclick="document.getElementById('loginModal').classList.remove('active')">×</button>
+            </div>
+            <form id="loginForm" class="modal-form">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="you@example.com" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="form-control">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="signUpWithEmail()">Create Account</button>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

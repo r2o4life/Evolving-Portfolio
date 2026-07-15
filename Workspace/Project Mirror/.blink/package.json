@@ -1,0 +1,8 @@
+{
+  "name": "project-mirror-blink",
+  "version": "1.0.0",
+  "description": "Blink configuration",
+  "dependencies": {
+    "impeccable": "^3.2.0"
+  }
+}
