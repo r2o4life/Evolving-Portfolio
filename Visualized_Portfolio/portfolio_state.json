@@ -71,6 +71,9 @@
       "value_proposition": "A dual-interface live commerce simulator connecting local merchants and consumers through proximity-based dynamic offer dispatching.",
       "summary": "This project establishes a real-time localized demand network. It features a Merchant Console for dispatching live promotional offers (e.g., 'Free cookie for the next 5 minutes') and a Consumer Simulator that instantly triggers and renders these offers when proximity thresholds are crossed.",
       "live_url": "https://frontend-omega-sage-14.vercel.app/",
+      "live_label": "Consumer Simulator &rarr;",
+      "secondary_url": "https://frontend-omega-sage-14.vercel.app/merchant",
+      "secondary_label": "Merchant Console &rarr;",
       "gemsg_pillars": [
         "Economics",
         "Modernization"
