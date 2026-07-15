@@ -63,6 +63,23 @@
         "clarity": "Highly focused workflow that removes complex knobs to prioritize deterministic output and ease of export.",
         "tone": "Functional, deterministic, and highly efficient."
       }
+    },
+    {
+      "id": "live-demand-pipeline",
+      "title": "Live Demand Pipeline (Cottage Hill)",
+      "timestamp": "2026-07-15T15:23:00-07:00",
+      "value_proposition": "A dual-interface live commerce simulator connecting local merchants and consumers through proximity-based dynamic offer dispatching.",
+      "summary": "This project establishes a real-time localized demand network. It features a Merchant Console for dispatching live promotional offers (e.g., 'Free cookie for the next 5 minutes') and a Consumer Simulator that instantly triggers and renders these offers when proximity thresholds are crossed.",
+      "live_url": "https://frontend-omega-sage-14.vercel.app/",
+      "gemsg_pillars": [
+        "Economics",
+        "Modernization"
+      ],
+      "act_evaluation": {
+        "aesthetics": "Real-time, dual-console simulation environment focusing on immediate transactional data.",
+        "clarity": "Clear separation of concerns between merchant broadcasting and consumer receiving.",
+        "tone": "Dynamic, immediate, and hyper-localized."
+      }
     }
   ]
 }
