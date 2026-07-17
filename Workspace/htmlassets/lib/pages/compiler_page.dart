@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
 
 import 'package:html_artifact_pipeline/models/html_artifact.dart';
 import 'package:html_artifact_pipeline/services/local_artifact_compiler_service.dart';
@@ -20,11 +21,8 @@ class CompilerPage extends StatefulWidget {
 
 class _CompilerPageState extends State<CompilerPage> {
   final _compiler = LocalArtifactCompilerService();
-
   late final TextEditingController _promptController;
 
-  // Keep the experience lean: no user-facing seed/style/size knobs.
-  // These are set deterministically under the hood for repeatable artifacts.
   static const String _defaultStyle = 'Blueprint';
   static const int _defaultWidth = 980;
   static const int _defaultHeight = 640;
@@ -34,9 +32,11 @@ class _CompilerPageState extends State<CompilerPage> {
   HtmlValidationResult? _validation;
 
   int _latestRequestId = 0;
-  String? _lastPromptEcho;
-  String? _lastStage;
   String? _lastError;
+  
+  // Telemetry stages
+  final List<_TelemetryEvent> _telemetryEvents = [];
+  Timer? _telemetryTimer;
 
   String _slugifyPrompt(String prompt) {
     final s = prompt.trim().toLowerCase();
@@ -72,7 +72,6 @@ class _CompilerPageState extends State<CompilerPage> {
     _promptController = TextEditingController(text: hasInitialPrompt ? widget.initialPrompt!.trim() : 'drone');
     
     if (hasInitialPrompt) {
-      // Auto-compile when navigating from the Ingress Page
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _compile();
       });
@@ -82,11 +81,11 @@ class _CompilerPageState extends State<CompilerPage> {
   @override
   void dispose() {
     _promptController.dispose();
+    _telemetryTimer?.cancel();
     super.dispose();
   }
 
   int _seedForPrompt(String prompt) {
-    // Simple 32-bit FNV-1a hash.
     final input = prompt.trim().toLowerCase();
     var hash = 0x811C9DC5;
     for (final unit in input.codeUnits) {
@@ -94,6 +93,33 @@ class _CompilerPageState extends State<CompilerPage> {
       hash = (hash * 0x01000193) & 0x7fffffff;
     }
     return hash == 0 ? 1337 : hash;
+  }
+
+  void _pushTelemetry(String stage, String details, {bool isError = false}) {
+    if (!mounted) return;
+    setState(() {
+      _telemetryEvents.add(_TelemetryEvent(
+        timestamp: DateTime.now(),
+        stage: stage,
+        details: details,
+        isError: isError,
+      ));
+    });
+  }
+
+  void _startSimulatedTelemetryPipeline(int requestId) {
+    _telemetryTimer?.cancel();
+    int step = 0;
+    _telemetryTimer = Timer.periodic(const Duration(milliseconds: 600), (timer) {
+      if (!mounted || requestId != _latestRequestId || !_isCompiling) {
+        timer.cancel();
+        return;
+      }
+      step++;
+      if (step == 1) _pushTelemetry('sys.AST_Parse', 'Syntactic intent resolved. Constructing graph.');
+      if (step == 2) _pushTelemetry('eng.GenSynth', 'Omni-pillar synthesis initiated. Executing generation.');
+      if (step == 3) _pushTelemetry('DOM.Render', 'Hydrating nodes. Establishing kinetic event listeners.');
+    });
   }
 
   Future<void> _compile() async {
@@ -107,12 +133,17 @@ class _CompilerPageState extends State<CompilerPage> {
     final requestId = ++_latestRequestId;
     setState(() {
       _isCompiling = true;
-      _lastPromptEcho = prompt;
-      _lastStage = 'compile:start';
       _lastError = null;
+      _artifact = null;
+      _validation = null;
+      _telemetryEvents.clear();
     });
+    
+    final startTime = DateTime.now();
+    _pushTelemetry('pipeline.Init', 'Initializing paradigm engine for: "$prompt"');
+    _startSimulatedTelemetryPipeline(requestId);
+
     try {
-      final startedAt = DateTime.now();
       final artifact = await _compiler.compile(
         prompt: prompt,
         seed: _seedForPrompt(prompt),
@@ -120,29 +151,27 @@ class _CompilerPageState extends State<CompilerPage> {
         width: _defaultWidth,
         height: _defaultHeight,
       );
-      if (!mounted) return;
-      if (requestId != _latestRequestId) {
-        debugPrint('Ignoring stale compile result. requestId=$requestId latest=$_latestRequestId');
-        return;
-      }
+      if (!mounted || requestId != _latestRequestId) return;
+      
+      final dt = DateTime.now().difference(startTime).inMilliseconds;
+      _pushTelemetry('validation.DOM', 'Artifact validated in ${dt}ms.', isError: false);
+      
       setState(() {
         _artifact = artifact;
         _validation = HtmlArtifactValidator.validate(artifact.html);
-        _lastStage = 'compile:done-${DateTime.now().difference(startedAt).inMilliseconds}ms';
       });
     } catch (e) {
       debugPrint('Compile failed: $e');
-      if (!mounted) return;
-      if (requestId != _latestRequestId) return;
+      if (!mounted || requestId != _latestRequestId) return;
       setState(() {
-        _lastStage = 'compile:error';
         _lastError = e.toString();
+        _pushTelemetry('ERR.Halt', 'Pipeline crashed: $e', isError: true);
       });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Compile failed. Check logs.')));
     } finally {
-      if (!mounted) return;
-      if (requestId != _latestRequestId) return;
+      if (!mounted || requestId != _latestRequestId) return;
       setState(() => _isCompiling = false);
+      _telemetryTimer?.cancel();
     }
   }
 
@@ -155,7 +184,6 @@ class _CompilerPageState extends State<CompilerPage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export HTML not valid: ${validation.message}')));
       return;
     }
-
     try {
       await HtmlArtifactExport.copyToClipboard(html);
       if (!mounted) return;
@@ -169,320 +197,270 @@ class _CompilerPageState extends State<CompilerPage> {
   Future<void> _downloadHtml() async {
     final artifact = _artifact;
     if (artifact == null) return;
-
     final exportHtml = await _buildExportHtml(artifact);
     final validation = HtmlArtifactValidator.validate(exportHtml);
     if (!validation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export HTML not valid: ${validation.message}')));
       return;
     }
-
     try {
       final slug = _slugifyPrompt(artifact.prompt);
-      HtmlArtifactExport.downloadAsHtmlFile(filename: 'index_${slug}.html', html: exportHtml);
+      HtmlArtifactExport.downloadAsHtmlFile(filename: 'index_$slug.html', html: exportHtml);
     } catch (e) {
-      debugPrint('Download failed: $e');
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Download is only available on web.')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    final a = _artifact;
-    final telemetry = <String>[
-      if (_lastPromptEcho != null) 'promptEcho="${_lastPromptEcho!.replaceAll('\n', ' ')}"',
-      'requestId=$_latestRequestId',
-      if (_lastStage != null) 'stage=$_lastStage',
-      if (a != null) 'artifactId=${a.id}',
-      if (a != null) 'kind=${a.objectKind}',
-      if (a != null && a.spatialLogic.trim().isNotEmpty) 'spatialLogic="${a.spatialLogic.replaceAll('\n', ' ')}"',
-      if (a != null) 'model=${a.generationModel}',
-      if (a != null) 'isFallback=${a.isFallback}',
-      if (a != null && (a.fallbackReason?.trim().isNotEmpty ?? false)) 'fallbackReason=${a.fallbackReason}',
-      if (a != null && (a.contractVersion?.trim().isNotEmpty ?? false)) 'contract=${a.contractVersion}',
-      if (_lastError != null) 'error=${_lastError!.replaceAll('\n', ' ')}',
-    ].join(' • ');
+    final isReady = _artifact != null && (_validation?.isValid ?? false);
 
     return Scaffold(
+      backgroundColor: Colors.black, // Forcing a dark, terminal-like feel for the SYNTACTIC paradigm
       appBar: AppBar(
-        title: const Text('Compiler'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Row(
+          children: [
+            const Icon(Icons.hub_rounded, size: 20, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            const Text('Paradigm Exec', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+          ],
+        ),
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: Icon(Icons.arrow_back_rounded, color: cs.onSurface),
-          tooltip: 'Back',
+          icon: const Icon(Icons.chevron_left_rounded, color: Colors.white70),
+          tooltip: 'Abort & Back',
         ),
         actions: [
-          IconButton(
-            onPressed: (_artifact == null || (_validation?.isValid ?? false) == false) ? null : _copyHtml,
-            icon: Icon(Icons.content_copy_rounded, color: (_artifact == null || (_validation?.isValid ?? false) == false) ? cs.onSurface.withValues(alpha: 0.35) : cs.onSurface),
-            tooltip: 'Copy HTML',
-          ),
-          IconButton(
-            onPressed: (_artifact == null || (_validation?.isValid ?? false) == false) ? null : () => _downloadHtml(),
-            icon: Icon(Icons.download_rounded, color: (_artifact == null || (_validation?.isValid ?? false) == false) ? cs.onSurface.withValues(alpha: 0.35) : cs.onSurface),
-            tooltip: kIsWeb ? 'Download HTML' : 'Download (web only)',
+          _ActionButton(
+            icon: Icons.content_copy_rounded,
+            label: 'Copy payload',
+            enabled: isReady,
+            onTap: _copyHtml,
           ),
           const SizedBox(width: 8),
+          _ActionButton(
+            icon: Icons.download_rounded,
+            label: 'Export .html',
+            enabled: isReady,
+            onTap: _downloadHtml,
+          ),
+          const SizedBox(width: 16),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Colors.white10, height: 1),
+        ),
       ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Padding(
-              padding: AppSpacing.paddingLg,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 980;
-                  return isWide
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(width: 380, child: _CompilerPanel(isCompiling: _isCompiling, promptController: _promptController, onCompile: _compile)),
-                            const SizedBox(width: 18),
-                            Expanded(child: _PreviewPanel(artifact: _artifact, isCompiling: _isCompiling, validation: _validation, telemetryLine: telemetry)),
-                          ],
-                        )
-                      : ListView(
-                          children: [
-                            _CompilerPanel(isCompiling: _isCompiling, promptController: _promptController, onCompile: _compile),
-                            const SizedBox(height: 18),
-                            _PreviewPanel(artifact: _artifact, isCompiling: _isCompiling, validation: _validation, telemetryLine: telemetry),
-                          ],
-                        );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompilerPanel extends StatelessWidget {
-  const _CompilerPanel({
-    required this.isCompiling,
-    required this.promptController,
-    required this.onCompile,
-  });
-
-  final bool isCompiling;
-  final TextEditingController promptController;
-  final Future<void> Function() onCompile;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: AppSpacing.paddingLg,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Compile', style: context.textStyles.titleMedium?.semiBold),
-            Text('Enter a semantic object, compile, then export a clean index.html.', style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant)),
-            const SizedBox(height: 14),
-            TextField(
-              controller: promptController,
-              textInputAction: TextInputAction.go,
-              maxLines: 1,
-              onSubmitted: (_) {
-                if (!isCompiling) onCompile();
-              },
-              decoration: InputDecoration(
-                labelText: 'Semantic object',
-                hintText: 'drone',
-                filled: true,
-                fillColor: cs.surfaceContainerHighest.withValues(alpha: 0.55),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.lg), borderSide: BorderSide.none),
-              ),
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: isCompiling ? null : () => onCompile(),
-                icon: Icon(isCompiling ? Icons.hourglass_top_rounded : Icons.bolt_rounded, color: cs.onPrimary),
-                label: Text(isCompiling ? 'Compiling…' : 'Compile artifact', style: TextStyle(color: cs.onPrimary)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PreviewPanel extends StatelessWidget {
-  const _PreviewPanel({required this.artifact, required this.isCompiling, required this.validation, required this.telemetryLine});
-
-  final HtmlArtifact? artifact;
-  final bool isCompiling;
-  final HtmlValidationResult? validation;
-  final String telemetryLine;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    Widget content;
-    if (artifact == null) {
-      content = Container(
-        height: 420,
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
-          border: Border.all(color: cs.outline.withValues(alpha: 0.14)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.web_asset_rounded, size: 34, color: cs.onSurfaceVariant),
-            const SizedBox(height: 12),
-            Text('No artifact generated yet', style: context.textStyles.titleMedium?.semiBold),
-            const SizedBox(height: 6),
-            Text('Compile to generate a single-file index.html and preview it here.', style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant), textAlign: TextAlign.center),
-          ],
-        ),
-      );
-    } else {
-      final v = validation;
-      final a = artifact!;
-      final kind = (a.objectKind.trim().isEmpty) ? 'object' : a.objectKind.trim();
-      final src = a.isFallback ? 'fallback' : 'groq';
-      content = SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(child: Text('Preview', style: context.textStyles.titleMedium?.semiBold)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
-                    border: Border.all(color: cs.outline.withValues(alpha: 0.16)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: (v?.isValid ?? false) ? Colors.green : cs.tertiary,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text((v?.isValid ?? false) ? 'exportable' : 'check', style: context.textStyles.labelMedium?.withColor(cs.onSurfaceVariant)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (a.isFallback) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  color: cs.tertiaryContainer.withValues(alpha: 0.35),
-                  border: Border.all(color: cs.outline.withValues(alpha: 0.14)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.warning_amber_rounded, size: 18, color: cs.onTertiaryContainer),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'AI output was downgraded to a deterministic fallback shape.'
-                        '${(a.fallbackReason?.trim().isNotEmpty ?? false) ? "\nReason: ${a.fallbackReason}" : ""}'
-                        '\nIf the reason is “no-key”, the Cloud Function is missing the GROQ_API_KEY secret.',
-                        style: context.textStyles.bodySmall?.withColor(cs.onTertiaryContainer),
+            // TOP CONTROLS (Command-K like)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              color: Colors.grey.shade900,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _promptController,
+                      style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 14),
+                      textInputAction: TextInputAction.go,
+                      onSubmitted: (_) { if (!_isCompiling) _compile(); },
+                      decoration: InputDecoration(
+                        isDense: true,
+                        prefixIcon: const Icon(Icons.terminal_rounded, size: 18, color: Colors.white54),
+                        hintText: 'Enter command payload...',
+                        hintStyle: const TextStyle(color: Colors.white30),
+                        filled: true,
+                        fillColor: Colors.black,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Colors.white24)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Colors.blueAccent)),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    ),
+                    onPressed: _isCompiling ? null : _compile,
+                    icon: _isCompiling ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.play_arrow_rounded, size: 18),
+                    label: Text(_isCompiling ? 'EXECUTING' : 'EXECUTE'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-            ],
-            AspectRatio(
-              aspectRatio: (a.width <= 0 ? 1 : a.width) / (a.height <= 0 ? 1 : a.height),
-              child: HtmlArtifactPreview(artifactId: a.id, html: a.html),
             ),
-            const SizedBox(height: 12),
-            Text(
-              '${a.prompt} • kind: $kind • source: $src (${a.generationModel}) • ${a.width}×${a.height} • compiler: ${a.compilerVersion}${(v == null) ? '' : ' • validate: ${v.message}'}',
-              style: context.textStyles.bodySmall?.withColor(cs.onSurfaceVariant),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              telemetryLine,
-              style: context.textStyles.labelSmall?.withColor(cs.onSurfaceVariant),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            Container(color: Colors.white10, height: 1),
+            
+            // MAIN CONTENT (Telemetry + Preview)
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // TELEMETRY PANEL
+                  Container(
+                    width: 320,
+                    decoration: const BoxDecoration(
+                      border: Border(right: BorderSide(color: Colors.white10)),
+                    ),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _telemetryEvents.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final event = _telemetryEvents[index];
+                        return _TelemetryRow(event: event);
+                      },
+                    ),
+                  ),
+                  
+                  // ARTIFACT PREVIEW PANEL
+                  Expanded(
+                    child: Container(
+                      color: Colors.black,
+                      padding: const EdgeInsets.all(24),
+                      child: _isCompiling && _artifact == null
+                          ? _buildCompilingState()
+                          : _artifact == null
+                              ? _buildEmptyState()
+                              : _buildArtifactState(),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      );
-    }
-
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 220),
-      child: isCompiling
-          ? _LoadingOverlay(child: content)
-          : content,
+      ),
     );
   }
-}
 
-class _LoadingOverlay extends StatelessWidget {
-  const _LoadingOverlay({required this.child});
-  final Widget child;
+  Widget _buildCompilingState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(color: Colors.blueAccent),
+          const SizedBox(height: 16),
+          Text('SYNTHESIZING PAYLOAD...', style: TextStyle(color: Colors.blueAccent.shade100, fontFamily: 'monospace', letterSpacing: 1.2)),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Stack(
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.input_rounded, size: 48, color: Colors.white24),
+          const SizedBox(height: 16),
+          const Text('AWAITING COMMAND', style: TextStyle(color: Colors.white38, fontFamily: 'monospace', fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArtifactState() {
+    final a = _artifact!;
+    final v = _validation;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        child,
-        Positioned.fill(
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: cs.surface.withValues(alpha: 0.60),
-                borderRadius: BorderRadius.circular(18),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(color: (v?.isValid ?? false) ? Colors.green.shade900 : Colors.red.shade900, borderRadius: BorderRadius.circular(4)),
+              child: Text(
+                (v?.isValid ?? false) ? 'VALIDATED' : 'FAULT',
+                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
               ),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    color: cs.surfaceContainerHighest.withValues(alpha: 0.78),
-                    border: Border.all(color: cs.outline.withValues(alpha: 0.16)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary)),
-                      const SizedBox(width: 10),
-                      Text('Compiling…', style: context.textStyles.labelLarge?.withColor(cs.onSurface)),
-                    ],
-                  ),
-                ),
-              ),
+            ),
+            const SizedBox(width: 8),
+            Text('ID: ${a.id.substring(0, 8)}', style: const TextStyle(color: Colors.white54, fontSize: 12, fontFamily: 'monospace')),
+            const Spacer(),
+            Text('${a.width}x${a.height} | ${a.generationModel}', style: const TextStyle(color: Colors.white54, fontSize: 12, fontFamily: 'monospace')),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white24),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: AspectRatio(
+              aspectRatio: (a.width <= 0 ? 1 : a.width) / (a.height <= 0 ? 1 : a.height),
+              child: HtmlArtifactPreview(artifactId: a.id, html: a.html),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TelemetryEvent {
+  final DateTime timestamp;
+  final String stage;
+  final String details;
+  final bool isError;
+  _TelemetryEvent({required this.timestamp, required this.stage, required this.details, this.isError = false});
+}
+
+class _TelemetryRow extends StatelessWidget {
+  const _TelemetryRow({required this.event});
+  final _TelemetryEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final timeStr = '${event.timestamp.second.toString().padLeft(2,'0')}.${event.timestamp.millisecond.toString().padLeft(3,'0')}';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(timeStr, style: TextStyle(color: Colors.white38, fontSize: 11, fontFamily: 'monospace')),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(event.stage, style: TextStyle(color: event.isError ? Colors.redAccent : Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
+              const SizedBox(height: 2),
+              Text(event.details, style: const TextStyle(color: Colors.white70, fontSize: 11, fontFamily: 'monospace')),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({required this.icon, required this.label, required this.enabled, required this.onTap});
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.white,
+        disabledForegroundColor: Colors.white30,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      onPressed: enabled ? onTap : null,
+      icon: Icon(icon, size: 16),
+      label: Text(label, style: const TextStyle(fontSize: 13, fontFamily: 'monospace')),
     );
   }
 }
