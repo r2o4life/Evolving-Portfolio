@@ -3,12 +3,12 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:html_artifact_pipeline/models/html_artifact.dart';
-import 'package:html_artifact_pipeline/groq/groq_config.dart';
+import 'package:html_artifact_pipeline/services/synthesis_engine.dart';
 
 class LocalArtifactCompilerService {
   static const String compilerVersion = 'local-0.3.0-webgl';
 
-  final Map<String, GroqGenerationResult> _kindCache = {};
+  final Map<String, SynthesisResult> _kindCache = {};
 
   Future<HtmlArtifact> compile({required String prompt, required int seed, required String style, required int width, required int height}) async {
     final startedAt = DateTime.now();
@@ -20,7 +20,7 @@ class LocalArtifactCompilerService {
     // supported particle object kind.
     final normalizedPrompt = prompt.trim();
     final cached = _kindCache[normalizedPrompt];
-    final resolvedKind = cached ?? await GroqConfig.generateSdf(prompt: normalizedPrompt);
+    final resolvedKind = cached ?? SynthesisEngine.synthesize(normalizedPrompt);
     // Only cache non-fallback generations. This prevents the app from getting
     // “stuck” on a fallback (e.g., when GROQ_API_KEY isn't configured yet).
     if (!resolvedKind.isFallback) _kindCache[normalizedPrompt] = resolvedKind;
@@ -64,12 +64,12 @@ class LocalArtifactCompilerService {
     // Use the same semantic routing for export artifacts so downloads always match preview.
     final normalizedPrompt = prompt.trim();
     final cached = _kindCache[normalizedPrompt];
-    final resolvedKind = cached ?? await GroqConfig.generateSdf(prompt: normalizedPrompt);
+    final resolvedKind = cached ?? SynthesisEngine.synthesize(normalizedPrompt);
     if (!resolvedKind.isFallback) _kindCache[normalizedPrompt] = resolvedKind;
     return _buildHtml(prompt: prompt, seed: seed, style: style, width: width, height: height, compilerVersion: compilerVersion, buildMs: 0, exportMode: true, resolvedKind: resolvedKind);
   }
 
-  String _buildHtml({required String prompt, required int seed, required String style, required int width, required int height, required String compilerVersion, required int buildMs, required bool exportMode, required GroqGenerationResult resolvedKind}) {
+  String _buildHtml({required String prompt, required int seed, required String style, required int width, required int height, required String compilerVersion, required int buildMs, required bool exportMode, required SynthesisResult resolvedKind}) {
     // Keep everything inline so the artifact is truly “single-file”.
     final safePrompt = const HtmlEscape(HtmlEscapeMode.element).convert(prompt.trim());
     final safeStyle = const HtmlEscape(HtmlEscapeMode.element).convert(style.trim());
