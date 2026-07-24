@@ -1,5 +1,5 @@
 {
-  "last_sync_timestamp": "2026-07-18T13:21:42-07:00",
+  "last_sync_timestamp": "2026-07-23T22:03:26-07:00",
   "portfolio_metadata": {
     "owner": "Arturo Roberto Garcia",
     "role": "Senior Product Designer & AI Strategist",
@@ -102,6 +102,24 @@
         "aesthetics": "Highly dynamic and structural, showcasing automated optimization and generative UI transitions without generic static components.",
         "clarity": "Immediate and actionable insights linking telemetry inputs directly to UI output changes.",
         "tone": "Authoritative, systemic, and progressive."
+      }
+    },
+    {
+      "id": "google-compiler",
+      "title": "Google Compiler (Vertical Ads: Autonomous UI Paradigm)",
+      "timestamp": "2026-07-23T22:03:26-07:00",
+      "value_proposition": "A conceptual demonstration of an 'Orchestration Layer' that automates interaction design, shifting from 'Layouts to Loops.'",
+      "summary": "This project proposes a paradigm shift where designers oversee AI-driven systems (Compile Engines) that detect user friction through real-time telemetry and automatically generate UI solutions. It features four mutually exclusive Compile Engines: Consumer Intent, Advertiser Workflow, Token & Component, and Spec & Velocity.",
+      "live_url": "https://compile-engines-demo.vercel.app/",
+      "gemsg_pillars": [
+        "Governance",
+        "Modernization",
+        "Sociology"
+      ],
+      "act_evaluation": {
+        "aesthetics": "A system-level orchestration interface simulating real-time telemetry and automated UI self-healing.",
+        "clarity": "Clearly structured around four distinct cybernetic loops mapping specific friction points to generative solutions.",
+        "tone": "Visionary, structured, and system-oriented."
       }
     }
   ]
