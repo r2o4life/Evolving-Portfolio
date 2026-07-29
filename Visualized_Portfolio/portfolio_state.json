@@ -1,5 +1,5 @@
 {
-  "last_sync_timestamp": "2026-07-23T22:03:26-07:00",
+  "last_sync_timestamp": "2026-07-29T11:41:10-07:00",
   "portfolio_metadata": {
     "owner": "Arturo Roberto Garcia",
     "role": "Senior Product Designer & AI Strategist",
@@ -120,6 +120,23 @@
         "aesthetics": "A system-level orchestration interface simulating real-time telemetry and automated UI self-healing.",
         "clarity": "Clearly structured around four distinct cybernetic loops mapping specific friction points to generative solutions.",
         "tone": "Visionary, structured, and system-oriented."
+      }
+    },
+    {
+      "id": "nike-generative-studio",
+      "title": "Nike Design Generative Studio",
+      "timestamp": "2026-07-29T11:41:10-07:00",
+      "value_proposition": "An end-to-end generative AI studio bridging industrial design concepts with deterministic ML node graphs and additive manufacturing slicer targets.",
+      "summary": "This project features a Creative Technologist Translation Layer, a 3D WebGL Spatial Annotation System (React Three Fiber) with real-time raycasting for world-space annotations on footwear lattice geometries, and Omni-Surface Deployment across 5 synchronized viewports backed by a unified Zustand store and real-time GPU VRAM controls.",
+      "live_url": "https://nike-generative-studio-qbzn5r8do-r2o4lifes-projects.vercel.app/",
+      "gemsg_pillars": [
+        "Governance",
+        "Modernization"
+      ],
+      "act_evaluation": {
+        "aesthetics": "Interactive 3D WebGL mesh canvas integrated seamlessly into a high-performance generative tool interface.",
+        "clarity": "Allows cross-functional teams to drop 3D-anchored annotations directly onto geometries, streamlining collaboration.",
+        "tone": "Advanced, industrial, and highly technical."
       }
     }
   ]
